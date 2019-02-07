@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Socket.io Test Application</title>
+</head>
+<body>
+  Hello
+  <input id="name" />
+  <button onclick="ButtonEmit()">Emit</button>
+  <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(13)">Enter</button>
+  <div style="display: flex; flex-direction: column; height: 80vh;">
+    <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(38)">Up</button>
+    
+    <div style="display: flex; flex-direction: row; width: 100vw; justify-content: center;">
+    <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(37)">Left</button>
+    <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(40)">Down</button>
+    <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(39)">Right</button>
+    </div>  
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+  <script>
+    var socket = io('http://192.168.43.80:7777');
+    function ButtonEmit () {
+      let data = { user: 'player', chatroomId: '233415', personalDetails: document.getElementById('name').value.trim() }
+      socket.emit('startup', { data });
+    }
+    function emitControl (keyCode) {
+      console.log('emitting control:', keyCode)
+      let data = { keyCode: keyCode, chatroomId: '233415' }
+      socket.emit('control', { data } );
+    }
+    socket.on('message', function (data) {
+      console.log(data)
+    })
+  </script>
+</body>
+</html>

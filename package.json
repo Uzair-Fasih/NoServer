@@ -1,0 +1,22 @@
+{
+  "name": "noserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "start.js",
+  "scripts": {
+    "start": "node ./start.js",
+    "watch": "nodemon ./start.js"
+  },
+  "dependencies": {
+    "axios": "0.15.3",
+    "body-parser": "1.17.1",
+    "dotenv": "4.0.0",
+    "express": "4.15.2",
+    "socket.io": "^2.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.3"
+  },
+  "author": "Uzair Fasih",
+  "license": "MIT"
+}
