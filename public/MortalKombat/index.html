@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>mk.js</title>
+    <script src="src/movement.js"></script>
+    <script src="src/mk.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="styles/styles.css" />
+</head>
+<body>
+    <table>
+    <thead>
+        <th>
+            Arena
+        </th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <div id="parent">
+                    <div id="utils">
+                        <div id="player1Name" class="playerName">Sub-Zero</div>
+                        <div id="player1LifeBar" class="lifebar"><div class="life" id="player1Life"></div></div>
+                        <div id="player2Name" class="playerName">Kano</div>
+                        <div id="player2LifeBar" class="lifebar"><div class="life" id="player2Life"></div></div>
+                    </div>
+                    <div id="arena">
+                    </div>
+                    <div id="loading">
+                        <span class="loadingLabel">Loading...</span>
+                    </div>
+                </div>
+            </td>
+            <td id="webcam-parent">
+            </td>
+        </tr>
+    </tbody>
+    <div class="manual">
+    </div>
+    <script>
+        (function () {
+
+            function $(id) {
+                return document.getElementById(id);
+            }
+
+            function setLife(container, life) {
+                container.style.width = life + '%';
+            }
+
+            document.onkeydown = function (e) {
+                if (e.keyCode === 32) {
+                    window.location.reload();
+                }
+            };
+
+            (function () {
+                var startGame = function () {
+                        $('loading').style.visibility = 'hidden';
+                        $('arena').style.visibility = 'visible';
+                        $('utils').style.visibility = 'visible';
+                    };
+                var options = {
+                    arena: {
+                        container: document.getElementById('arena'),
+                        arena: mk.arenas.types.THRONE_ROOM
+                    },
+                    fighters: [{ name: 'Subzero' }, { name: 'Kano' }],
+                    callbacks: {
+                        attack: function (f, o, l) {
+                            if (o.getName() === 'kano') {
+                                setLife($('player2Life'), o.getLife());
+                            } else {
+                                setLife($('player1Life'), o.getLife());
+                            }
+                        }
+
+                    },
+                    isHost: true,
+                    gameName: 'NoConsole',
+                    gameType: 'multiplayer'
+                };
+
+                function startNewGame() {
+                    mk.start(options).ready(function () {
+                        startGame();
+                    });
+                }
+                startNewGame();
+            }());
+
+        }());
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <script>
+        const urlString = window.location.href
+    
+        function emulateKeyPress (keyCode) {
+            var evt = new KeyboardEvent('keydown', {'keyCode':keyCode, 'which':keyCode});
+            document.dispatchEvent (evt);
+            setTimeout(function () {
+                var evt = new KeyboardEvent('keyup', {'keyCode':keyCode, 'which':keyCode});
+                document.dispatchEvent (evt);
+            }, 1000)
+        }
+    
+        const socket = io('http://192.168.1.4:7777')
+    const vm = this
+    socket.on('connect', function () {
+            console.log('Connecting to NoServer')
+            console.log(urlString.split('=')[1])
+      socket.emit('CONSOLE_REDIRECT', { sessionId: urlString.split('=')[1] })
+    })
+    
+    socket.on('STATUS_INFO', function (res) {
+            // vm.playersConnected = res.playerCount
+            // if (res.playerCount === 0) {
+    
+            // }
+      console.log(res)
+    })
+    
+    socket.on('CONTROL_INFO', function (res) {
+      console.log(res)
+      if (res.controllerId === 1) {
+                if (res.keyCode === 8) {
+                    window.location.href = 'http://localhost:8080?sessiodId=' + urlString.split('=')[1]
+                } else if (res.keyCode === 82) {
+                    window.location.reload()
+                } else {
+                    emulateKeyPress(res.keyCode)
+                }
+      }
+    })
+    </script>
+</body>
+</html>

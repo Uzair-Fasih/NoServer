@@ -1,8 +1,5 @@
+require('dotenv').config({ path: 'variables.env' });
 const app = require('./app')
-// app.set('port', process.env.PORT || 7777)
-// const server = app.listen(app.get('port'), () => {
-//   console.log(`Express running → PORT ${server.address().port}`)
-// })
-app.listen(process.env.PORT || 7777, "192.168.43.80", function(){
-  console.log('listening on *:3000');
+app.listen(process.env.PORT || 7777, process.env.LAN_IP, function(){
+  console.log('NoServer is active at ' + process.env.LAN_IP + ':7777');
 })

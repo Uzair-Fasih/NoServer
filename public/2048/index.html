@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<title>2048 Game</title>
 
-	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<link rel="stylesheet" type="text/css" href="/2048/css/style.css">
 </head>
 <body>
 
@@ -19,14 +19,6 @@
 
 	    <div class="above-game">
 	      <p class="game-intro">Join the numbers and get to the <strong>2048 tile!</strong></p>
-	      <a class="restart-button" v-on="click: init">New Game</a>
-	      <label class='left' for="noTiles">Select the number of tiles</label>
-	    
-	      <select v-on="change: changesTilesSize" v-selected="conf.size">
-	      	<option value="4">4 tiles</option>
-	      	<option value="5">5 tiles</option>
-	      	<option value="6">6 tiles</option>
-	      </select>
 	    </div>
 
 	    <div class="game-container" v-style="width:findDimension + 'px', height: findDimension + 'px'">
@@ -89,16 +81,47 @@
 
 
 
-	<script src="/js/libs/vue.js"></script>
-	<script src="/js/keys.js"></script>
-	<script src="/js/store.js"></script>
-	<script src="/js/main.js"></script>
-	<script src="//localhost:35729/livereload.js"></script>
+	<script src="/2048/js/libs/vue.js"></script>
+	<script src="/2048/js/keys.js"></script>
+	<script src="/2048/js/store.js"></script>
+	<script src="/2048/js/main.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
 	<script>
-		const url_string = window.location.href
-		var url = new URL(url_string);
-		var c = url.searchParams.get("c");
-		console.log(c);
+		const urlString = window.location.href
+
+		function emulateKeyPress (keyCode) {
+      var evt = new KeyboardEvent('keydown', {'keyCode':keyCode, 'which':keyCode});
+			document.dispatchEvent (evt);
+		}
+
+		const socket = io('http://192.168.1.4:7777')
+    const vm = this
+    socket.on('connect', function () {
+			console.log('Connecting to NoServer')
+			console.log(urlString.split('=')[1])
+      socket.emit('CONSOLE_REDIRECT', { sessionId: urlString.split('=')[1] })
+    })
+
+    socket.on('STATUS_INFO', function (res) {
+			// vm.playersConnected = res.playerCount
+			// if (res.playerCount === 0) {
+
+			// }
+      console.log(res)
+    })
+
+    socket.on('CONTROL_INFO', function (res) {
+      console.log(res)
+      if (res.controllerId === 1) {
+				if (res.keyCode === 8) {
+					window.location.href = 'http://localhost:8080?sessiodId=' + urlString.split('=')[1]
+				} else if (res.keyCode === 82) {
+					window.location.reload()
+				} else {
+					emulateKeyPress(res.keyCode)
+				}
+      }
+    })
 	</script>
 </body>
 </html>

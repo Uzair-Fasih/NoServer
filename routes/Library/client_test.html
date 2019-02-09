@@ -9,7 +9,7 @@
 <body>
   Hello
   <input id="name" />
-  <button onclick="ButtonEmit()">Emit</button>
+  <button onclick="ButtonEmitEdit()">Emit</button>
   <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(13)">Enter</button>
   <div style="display: flex; flex-direction: column; height: 80vh;">
     <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(38)">Up</button>
@@ -18,22 +18,30 @@
     <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(37)">Left</button>
     <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(40)">Down</button>
     <button style="height:10vh; width: 10vh; align-self: center" onclick="emitControl(39)">Right</button>
+    <input id="emit"/>
     </div>  
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
   <script>
-    var socket = io('http://192.168.43.80:7777');
+    var socket = io(window.location.href)
     function ButtonEmit () {
-      let data = { user: 'player', chatroomId: '233415', personalDetails: document.getElementById('name').value.trim() }
-      socket.emit('startup', { data });
+      socket.emit('CONTROLLER_START_UP', { sessionId: 1 });
     }
     function emitControl (keyCode) {
-      console.log('emitting control:', keyCode)
-      let data = { keyCode: keyCode, chatroomId: '233415' }
-      socket.emit('control', { data } );
+      let data = { keyCode: keyCode }
+      socket.emit('CONTROLLER_CONTROL', { data } );
+    }
+    function ButtonEmitEdit () {
+      let data = { keyCode: Number(document.getElementById('emit').value) }
+      socket.emit('CONTROLLER_CONTROL', { data });
     }
     socket.on('message', function (data) {
       console.log(data)
+    })
+
+    socket.on('connect', function (res) {
+      console.log('Connection Established')
+      socket.emit('CONTROLLER_START_UP', { sessionId: 0 });
     })
   </script>
 </body>

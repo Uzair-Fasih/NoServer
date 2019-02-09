@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<iframe id="myframe" src="https://mk.mgechev.com/" style="height: 100vh; width: 100vw; border: none;"></iframe>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+<script>
+    function setFocusThickboxIframe() {
+        document.getElementById('myframe').contentWindow.focus();
+    }
+    setTimeout(setFocusThickboxIframe, 100);
+    const urlString = window.location.href
+
+    function emulateKeyPress (keyCode) {
+  var evt = new KeyboardEvent('keydown', {'keyCode':keyCode, 'which':keyCode});
+  document.getElementById('myframe').contentWindow.document.dispatchEvent (evt);
+    }
+
+    const socket = io('http://192.168.1.4:7777')
+const vm = this
+socket.on('connect', function () {
+        console.log('Connecting to NoServer')
+        console.log(urlString.split('=')[1])
+  socket.emit('CONSOLE_REDIRECT', { sessionId: urlString.split('=')[1] })
+})
+
+socket.on('STATUS_INFO', function (res) {
+        // vm.playersConnected = res.playerCount
+        // if (res.playerCount === 0) {
+
+        // }
+  console.log(res)
+})
+
+socket.on('CONTROL_INFO', function (res) {
+  console.log(res)
+  if (res.controllerId === 1) {
+            if (res.keyCode === 8) {
+                window.location.href = 'http://localhost:8080?sessiodId=' + urlString.split('=')[1]
+            } else if (res.keyCode === 82) {
+                window.location.reload()
+            } else {
+                emulateKeyPress(res.keyCode)
+            }
+  }
+})
+</script>
+</body>
+</html>
+
+<style>
+* {
+    padding: 0;
+    margin: 0;
+}
+body {
+    overflow: hidden;
+}
+</style>

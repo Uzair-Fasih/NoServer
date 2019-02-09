@@ -1,70 +1,91 @@
-let chatrooms = []
+const quickSettings = {
+  maxPlayers: 2
+}
 
-const Startup = (res, socket) => {
-  let data = res.data
-  const chatroom = getChatroom(data.chatroomId)
+var sessions = []
 
-  if (data.user === 'screen' &&  !chatroom) {
-    console.log('A screen has joined the connection.')
-    chatrooms.push({
-      chatroomId: data.chatroomId,
-      server: socket,
-      players: [],
-      users: [],
-      game: null
-    })
-    console.log('Chatrooms: ' + chatrooms.length)
-    socket.emit('message', { status: true, data: { playersConnected: 0, users: [] } })
-  } else if (data.user === 'player' && chatroom && chatroom.users.length < 4) {
-    // Add Player to the chatroom
-    chatroom.players.push(socket)
-    // // Add User details to the chatroom
-    chatroom.users.push(data.personalDetails)
+const consoleStartup = (res, socket, noConsoleId) => {
+  console.log('Console Startup')
+  const sessionsId = sessions.length
+  sessions.push([socket])
+  noConsoleId = '' + sessionsId + '|0' // Screen
+  socket.emit('SET_SESSION_ID', { status: true, data: { sessionsId } })
+  return noConsoleId
+}
 
-    console.log('A player has joined the connection. Current Player Count: ' + (chatroom.players.length + 1))
-    // Send status info to server
-    chatroom.server.emit('message', { status: true, data: { playersConnected: chatroom.players.length, users: chatroom.users } })
-    //Acknowledgement to player
-    socket.send({ status: true })
+const controllerStartup = (res, socket, noConsoleId) => {
+  console.log('Controller Startup')
+  const sessionsId = res.sessionId
+  if (sessions[sessionsId]) {
+    const controllerId = sessions[sessionsId].length
+    if (controllerId >= quickSettings.maxPlayers + 1) {
+      socket.send({ status: false, error: 'Max Players in Session' })
+      socket.disconnect();
+      return
+    }
+    sessions[sessionsId].push(socket)
+    noConsoleId = '' + sessionsId + '|' + controllerId // Controller
+    sessions[sessionsId][0].emit('STATUS_INFO', { playerCount: sessions[sessionsId].filter(controller => controller).length - 1 })
+    socket.send({ status: true, data: { controllerId }})
+    return noConsoleId
   } else {
-    socket.send({ status: false })
-    console.log('Rejected')
-    socket.disconnect()
+    socket.send({ status: false, error: 'Session is invalid' })
   }
 }
 
-const control = (res, socket) => {
+const disconnectedDevice = (res, socket, noConsoleId) => {
+  console.log('Disconnected Device')
+  if (noConsoleId.length > 0) {
+    const sessionsId = Number(noConsoleId.split('|')[0])
+    const deviceId = Number(noConsoleId.split('|')[1])
+    const limit = sessions[sessionsId].length
+    if (deviceId === 1) {
+      // Device is console, drop all players
+      for (let i = deviceId + 1; i < limit; i++) {
+        if (sessions[sessionsId] && sessions[sessionsId][i]) {
+          sessions[sessionsId][i].emit('STATUS_INFO', { message: 'Console has been terminated' } )
+          sessions[sessionsId][i].disconnect()
+        }
+      }
+      // if (deviceId === 1)
+        sessions[sessionsId][0].emit('STATUS_INFO', { playerCount: sessions[sessionsId].filter(controller => controller).length - 1 })
+    } else if (deviceId !== 0) {
+      // Drop controller, notify console
+      sessions[sessionsId][deviceId] = null
+      sessions[sessionsId][0].emit('STATUS_INFO', { playerCount: sessions[sessionsId].filter(controller => controller).length - 1 })
+    }
+  }
+}
 
+const consoleRedirect = (res, socket, noConsoleId) => {
+  const sessionsId = res.sessionId
+  sessions[sessionsId][0] = socket
+  sessions[sessionsId][0].emit('STATUS_INFO', { playerCount: sessions[sessionsId].filter(controller => controller).length - 1 })
+}
+
+const controllerControl = (res, socket, noConsoleId) => {
+  if (noConsoleId.length > 0) {
+    console.log('Controller Control', res)
+    const sessionsId = Number(noConsoleId.split('|')[0])
+    const deviceId = Number(noConsoleId.split('|')[1])
+    sessions[sessionsId][0].emit('CONTROL_INFO', { keyCode: res.data.keyCode, controllerId: deviceId })
+  }
 }
 
 const SocketHandler = socket => {
-  socket.on('startup', res => Startup(res, socket))
-  socket.on('control', function (res) {
-    let data = res.data
-    const chatroom = getChatroom(data.chatroomId)
-    console.log(data)
-    chatroom.server.emit('control', { keyCode: data.keyCode })
-    if (chatroom.game) {
-      console.log('sending controls to game')
-      chatroom.game.emit('control', { keyCode: data.keyCode })
-    }
-  })
+  // var noConsoleId = '-chatroomid-|-index-'
+  var noConsoleId = ''
   
-  socket.on('gameConnect', function (res) {
-    let data = res.data
-    const chatroom = getChatroom(data.chatroomId)
-    chatroom.game = socket
-    console.log('A game session has been established')
-    socket.emit('control', { status: true })
-  })
-}
+  // Begin and End 
+  socket.on('CONSOLE_START_UP', res => noConsoleId = consoleStartup(res, socket, noConsoleId))
+  socket.on('CONTROLLER_START_UP', res => noConsoleId = controllerStartup(res, socket, noConsoleId))
+  socket.on('disconnect', res => disconnectedDevice(res, socket, noConsoleId))
 
-const getChatroom = chatroomId => {
-  for (let i = 0; i < chatrooms.length; i++) {
-    if (chatrooms[i].chatroomId === chatroomId)
-      return chatrooms[i]
-  }
-  return null
+  // Reconnecting
+  socket.on('CONSOLE_REDIRECT', res => consoleRedirect(res, socket, noConsoleId))
+
+  // Controls
+  socket.on('CONTROLLER_CONTROL', res => controllerControl(res, socket, noConsoleId))
 }
 
 module.exports = SocketHandler
