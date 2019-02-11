@@ -13,7 +13,8 @@
   <button onclick="ButtonEmit()">Emit</button>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
   <script>
-    var socket = io('http://192.168.43.80:7777');
+    const urlString = window.location.href
+    const socket = io(urlString.split('7777')[0] + '7777'
     function ButtonEmit () {
       socket.emit(document.getElementById('emit').value, { sessionId: document.getElementById('value').value.trim() });
     }
