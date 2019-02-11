@@ -35,7 +35,7 @@ const controllerStartup = (res, socket, noConsoleId) => {
 
 const disconnectedDevice = (res, socket, noConsoleId) => {
   console.log('Disconnected Device')
-  if (noConsoleId.length > 0) {
+  if (noConsoleId && noConsoleId.length > 0) {
     const sessionsId = Number(noConsoleId.split('|')[0])
     const deviceId = Number(noConsoleId.split('|')[1])
     const limit = sessions[sessionsId].length
@@ -48,7 +48,9 @@ const disconnectedDevice = (res, socket, noConsoleId) => {
         }
       }
       // if (deviceId === 1)
-        sessions[sessionsId][0].emit('STATUS_INFO', { playerCount: sessions[sessionsId].filter(controller => controller).length - 1 })
+        sessions[sessionsId][1] === null
+        console.log(sessions[sessionsId].filter(controller => controller).length - 2)
+        sessions[sessionsId][0].emit('STATUS_INFO', { playerCount: sessions[sessionsId].filter(controller => controller).length - 2 })
     } else if (deviceId !== 0) {
       // Drop controller, notify console
       sessions[sessionsId][deviceId] = null
@@ -61,6 +63,12 @@ const consoleRedirect = (res, socket, noConsoleId) => {
   const sessionsId = res.sessionId
   sessions[sessionsId][0] = socket
   sessions[sessionsId][0].emit('STATUS_INFO', { playerCount: sessions[sessionsId].filter(controller => controller).length - 1 })
+  const limit = sessions[sessionsId].length
+  for (let i = 1; i < limit; i++) {
+    if (sessions[sessionsId] && sessions[sessionsId][i]) {
+      sessions[sessionsId][i].emit('LAYOUT', { layout: res.layout } )
+    }
+  }
 }
 
 const controllerControl = (res, socket, noConsoleId) => {

@@ -276,12 +276,12 @@
 			document.dispatchEvent (evt);
 		}
 
-		const socket = io('http://192.168.1.4:7777')
+		const socket = io('http://192.168.43.80:7777')
     const vm = this
     socket.on('connect', function () {
 			console.log('Connecting to NoServer')
 			console.log(urlString.split('=')[1])
-      socket.emit('CONSOLE_REDIRECT', { sessionId: urlString.split('=')[1] })
+      socket.emit('CONSOLE_REDIRECT', { sessionId: (urlString.split('=')[1]).split('&')[0], layout: urlString.split('=')[2] })
     })
 
     socket.on('STATUS_INFO', function (res) {
