@@ -1,5 +1,5 @@
 const quickSettings = {
-  maxPlayers: 2
+  maxPlayers: 10
 }
 
 var sessions = []
@@ -87,7 +87,7 @@ const SocketHandler = socket => {
   // Begin and End 
   socket.on('CONSOLE_START_UP', res => noConsoleId = consoleStartup(res, socket, noConsoleId))
   socket.on('CONTROLLER_START_UP', res => noConsoleId = controllerStartup(res, socket, noConsoleId))
-  socket.on('disconnect', res => disconnectedDevice(res, socket, noConsoleId))
+  // socket.on('disconnect', res => disconnectedDevice(res, socket, noConsoleId))
 
   // Reconnecting
   socket.on('CONSOLE_REDIRECT', res => consoleRedirect(res, socket, noConsoleId))
